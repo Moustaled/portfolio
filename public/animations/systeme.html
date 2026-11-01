@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ISE Lab — Système électrique 3D interactif</title>
+<meta name="description" content="Prototype interactif 3D d'un réseau électrique industriel : transformateur 630 kVA, photovoltaïque, éolien, TGBT et flux." />
+<style>
+:root{--navy:#0a1b37;--blue:#2563eb;--mint:#14b8a6;--line:#e4ebf3;--muted:#697c97}
+*{box-sizing:border-box}html,body{margin:0;width:100%;min-height:100%;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f4f8fe;color:var(--navy)}
+button,input{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible{outline:3px solid #9dc4ff;outline-offset:2px}
+.app{display:grid;grid-template-columns:334px minmax(0,1fr);min-height:100vh}
+.sidebar{position:relative;z-index:3;background:rgba(255,255,255,.97);border-right:1px solid var(--line);padding:27px 22px 25px;display:flex;flex-direction:column;gap:21px;box-shadow:12px 0 38px #385e9610}
+.logo{display:flex;align-items:center;gap:12px}.mark{width:40px;height:40px;display:grid;place-items:center;border-radius:13px;background:#0f3471;color:#fff;font-size:21px;font-weight:800;box-shadow:0 10px 24px #235ec52e}.brand{font-size:17px;font-weight:800;letter-spacing:-.5px}.subbrand{color:#8491a4;font-size:11px;margin-top:2px;font-weight:650;letter-spacing:.1em;text-transform:uppercase}
+.overline{font-size:10px;letter-spacing:.18em;color:#899bb4;font-weight:800;text-transform:uppercase}
+h1{margin:8px 0 10px;font-size:27px;line-height:1.13;letter-spacing:-1.2px}h1 em{font-style:normal;color:#2764d8}.intro{font-size:12.6px;line-height:1.6;color:#6f8199;margin:0}
+.info-chip{display:inline-flex;align-items:center;gap:7px;font-size:11px;background:#edf7f5;border:1px solid #cdefe7;color:#15836d;border-radius:30px;padding:7px 10px;font-weight:750;width:max-content}.dot{width:7px;height:7px;border-radius:50%;background:#22c9a5;box-shadow:0 0 0 3px #22c9a521}
+.section-title{display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:850;letter-spacing:.015em;margin:0 0 14px}.section-title span{font-size:10px;color:#8fa1b7;font-weight:650}
+.segment{border:1px solid var(--line);border-radius:17px;padding:16px;background:linear-gradient(145deg,#fff,#fbfdff)}
+.ctrl{margin-top:16px}.ctrl:first-of-type{margin-top:0}.row{display:flex;align-items:center;justify-content:space-between;gap:8px}.label{font-size:12px;font-weight:750}.value{font-weight:800;font-size:13px;font-variant-numeric:tabular-nums}.hint{font-size:10.5px;color:#8492a5;margin-top:4px}
+input[type=range]{width:100%;margin:12px 0 2px;appearance:none;cursor:pointer;height:5px;border-radius:20px;background:linear-gradient(90deg,#368cff,#dbe8f5)} input[type=range]::-webkit-slider-thumb{appearance:none;width:16px;height:16px;border-radius:50%;background:#fff;border:4px solid #2671e7;box-shadow:0 2px 9px #2268db44}
+.switch{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid #edf1f7}.switch:last-child{border-bottom:0;padding-bottom:0}.switch:first-child{padding-top:0}.source{display:flex;gap:10px;align-items:center}.symbol{width:30px;height:30px;border-radius:10px;background:#eaf3ff;display:grid;place-items:center;color:#1969d2;font-size:16px}.source-name{font-size:12px;font-weight:750}.source-desc{color:#889ab0;font-size:10px;margin-top:2px}.toggle{position:relative;display:block;width:35px;height:21px;border-radius:20px;border:0;background:#d7e1ef;transition:.2s;padding:0}.toggle::after{content:"";position:absolute;top:3px;left:3px;width:15px;height:15px;border-radius:50%;background:white;box-shadow:0 1px 3px #0001;transition:.2s}.toggle.on{background:#24bda5}.toggle.on::after{transform:translateX(14px)}
+.meters{display:grid;grid-template-columns:1fr 1fr;gap:9px}.meter{background:#f4f8fe;border:1px solid #e7eef8;border-radius:12px;padding:11px}.meter .m-label{color:#8798b0;font-size:10px;font-weight:680}.meter .m-value{font-size:20px;font-weight:850;margin-top:5px;letter-spacing:-.6px;white-space:nowrap}.meter .unit{font-size:11px;margin-left:2px;color:#8a9cb0}.bar-bg{height:7px;border-radius:20px;background:#e8f0f8;margin-top:13px;overflow:hidden}.bar-fill{height:100%;width:0%;background:linear-gradient(90deg,#20c9b2,#48aaff);border-radius:20px;transition:width .3s,background .3s}.status{font-size:11px;font-weight:700;margin-top:9px;color:#26866f;line-height:1.5}.status.warn{color:#cf4b48}
+.buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px}.btn{border-radius:10px;padding:11px 8px;background:#fff;border:1px solid #dfe8f4;font-size:11.5px;font-weight:780;color:#22426b}.btn.primary{background:#173f88;color:white;border-color:#173f88}.btn:hover{filter:brightness(.97)}
+.disclaimer{font-size:10.5px;color:#91a1b3;line-height:1.6;padding:0 3px}
+.stage{position:relative;min-width:0;min-height:660px;overflow:hidden;background:radial-gradient(ellipse at 57% 30%,#fff 0%,#ebf5ff 60%,#ddebf9 100%)}
+#view{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}#view:active{cursor:grabbing}
+.topbar{position:absolute;left:28px;right:29px;top:25px;display:flex;align-items:flex-start;justify-content:space-between;pointer-events:none;gap:18px}.top-title{background:#fffdf4c9;backdrop-filter:blur(12px);border:1px solid #ffffffb9;padding:13px 17px;border-radius:13px;box-shadow:0 8px 35px #2c649510}.top-title .upper{color:#8296b1;letter-spacing:.14em;font-size:9px;font-weight:850}.top-title strong{display:block;font-size:14px;margin-top:5px;letter-spacing:-.2px}.badge{background:#ffffffdc;backdrop-filter:blur(10px);border:1px solid #e1eefa;border-radius:30px;padding:9px 12px;font-size:11px;color:#335984;font-weight:750;box-shadow:0 6px 15px #4e84ba0d;white-space:nowrap}.badge b{color:#15ae8d;margin-right:5px}
+.hintbar{position:absolute;bottom:23px;left:50%;transform:translateX(-50%);border:1px solid #ffffffdd;border-radius:40px;background:#ffffffdf;box-shadow:0 8px 40px #285e921f;padding:11px 16px;color:#67819c;font-size:11px;font-weight:650;white-space:nowrap;display:flex;gap:12px;align-items:center;pointer-events:none}.hintbar strong{color:#2b5686}
+.tools{position:absolute;right:24px;bottom:23px;display:flex;gap:7px}.tool{background:#ffffffeb;border:1px solid #d8e7f9;border-radius:12px;color:#41658c;box-shadow:0 8px 30px #2b638015;padding:11px 12px;font-size:12px;font-weight:700}.tool.on{background:#1e5abb;color:white;border-color:#1e5abb}
+.hotspot{position:absolute;z-index:2;pointer-events:auto;transform:translate(-50%,-100%);border:1px solid #cfdef3;background:#fffc;backdrop-filter:blur(10px);color:#375d82;padding:6px 10px;border-radius:9px;font-size:10px;font-weight:800;box-shadow:0 6px 18px #13518718;white-space:nowrap;transition:background .2s,border-color .2s}.hotspot:hover,.hotspot.selected{border-color:#4292f1;background:#edf7ff}.hotspot::after{content:"";position:absolute;left:50%;bottom:-5px;width:7px;height:7px;background:inherit;border-right:1px solid #cfdef3;border-bottom:1px solid #cfdef3;transform:translateX(-50%) rotate(45deg)}
+.details{position:absolute;right:24px;top:92px;width:min(268px,calc(100% - 55px));background:#fffffff2;backdrop-filter:blur(20px);border:1px solid #e3ebf5;border-radius:17px;box-shadow:0 18px 55px #356a9b27;padding:17px 18px;z-index:3}.details .d-title{font-size:14px;font-weight:840}.details p{font-size:11.5px;color:#7387a2;line-height:1.6;margin:7px 0 0}.detail-tag{font-size:10px;font-weight:750;color:#2671cb;margin-top:9px}.close{position:absolute;right:10px;top:9px;background:none;border:0;color:#95a9c0;font-size:17px}.details[hidden]{display:none}
+.loading{position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(140deg,#e8f4ff,#f7fbff);z-index:5;color:#426584;font-size:13px;text-align:center;padding:18px}.loading strong{display:block;color:#20437f;font-size:18px;margin-bottom:10px}
+@media(max-width:840px){.app{display:flex;flex-direction:column-reverse}.sidebar{border-right:0;border-top:1px solid #dde7f6;padding:20px;display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.sidebar>.logo,.sidebar>.head,.sidebar>.buttons,.sidebar>.disclaimer{grid-column:1/-1}.stage{height:590px;min-height:0}.topbar{left:14px;top:13px;right:14px}.details{top:88px;right:12px}.hintbar{bottom:13px;left:13px;transform:none}.tools{right:13px;bottom:62px}}
+@media(max-width:560px){.sidebar{display:flex}.stage{height:490px}.top-title{padding:11px}.top-title strong{font-size:12px}.badge{font-size:9px;padding:7px}.hintbar{font-size:9px;gap:6px;padding:8px 10px}.details{top:85px;width:210px}.tools{bottom:50px}.hotspot{font-size:9px;padding:5px}}
+</style>
+<script type="importmap">{"imports":{"three":"../vendor/three/three.module.js","three/addons/":"../vendor/three/"}}</script>
+<script>if(new URLSearchParams(location.search).has('embed'))document.documentElement.classList.add('portfolio-embed');</script>
+<style>
+.portfolio-embed,.portfolio-embed body{margin:0!important;padding:0!important;width:100%;height:100%;overflow:hidden;background:#f0f6fc!important}
+.portfolio-embed .shell,.portfolio-embed .page,.portfolio-embed .wrap{margin:0!important;padding:0!important;max-width:none!important;width:100%;height:100%}
+.portfolio-embed header,.portfolio-embed .below,.portfolio-embed footer{display:none!important}
+.portfolio-embed #stage{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-height:0!important;margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+.portfolio-embed #stage:after,.portfolio-embed #stage:before{display:none!important}
+.portfolio-embed #stage>:not(canvas):not(#loading):not(#fallback):not(#error):not(#notice){display:none!important}
+.portfolio-embed #stage canvas{width:100%!important;height:100%!important;inset:0!important}
+.portfolio-embed #loading{font-size:12px}.portfolio-embed #loading strong{font-size:15px}
+</style>
+<script>
+// The parent pauses off-screen scenes and honors reduced-motion preferences.
+(()=>{if(!document.documentElement.classList.contains('portfolio-embed'))return;
+const native=window.requestAnimationFrame.bind(window),cancel=window.cancelAnimationFrame.bind(window),jobs=new Map();let paused=false,id=0,rendered=false;
+window.requestAnimationFrame=callback=>{const key=++id;const job={callback,nativeId:null};jobs.set(key,job);if(!paused)job.nativeId=native(time=>{jobs.delete(key);rendered=true;callback(time)});return key};
+window.cancelAnimationFrame=key=>{const job=jobs.get(key);if(job){if(job.nativeId!==null)cancel(job.nativeId);jobs.delete(key)}};
+addEventListener('message',event=>{if(event.source!==parent||event.origin!==location.origin||event.data?.type!=='portfolio:playback')return;const next=!event.data.playing;if(next===paused)return;paused=next;for(const[key,job]of jobs){if(paused){if(rendered){if(job.nativeId!==null)cancel(job.nativeId);job.nativeId=null}}else{job.nativeId=native(time=>{jobs.delete(key);rendered=true;job.callback(time)})}}});
+})();
+</script><style>.portfolio-embed .sidebar{display:none!important}.portfolio-embed .app{display:block!important;width:100%;height:100%;padding:0!important;min-height:0!important}</style></head>
+<body>
+<div class="app">
+<aside class="sidebar">
+ <div class="logo"><div class="mark">ϟ</div><div><div class="brand">ISE / <span style="color:#3974d8">Lab</span></div><div class="subbrand">Simulateur interactif</div></div></div>
+ <div class="head"><span class="info-chip"><i class="dot"></i> Scène 3D opérationnelle</span><div class="overline" style="margin-top:21px">ÉTUDE / RÉSEAU BASSE TENSION</div><h1>Explorer un <em>réseau électrique.</em></h1><p class="intro">Pilote les sources renouvelables, augmente la demande et observe la charge d’un transformateur 630 kVA en temps réel.</p></div>
+ <section class="segment"><div class="section-title">Contrôle de la demande <span>CHARGES BT</span></div><div class="row"><span class="label">Puissance appelée</span><span class="value"><span id="loadVal">580</span> kW</span></div><input id="loadRange" type="range" min="100" max="950" step="10" value="580" aria-label="Puissance appelée (kW)"/><div class="hint">Déplace le curseur pour simuler la demande.</div></section>
+ <section class="segment"><div class="section-title">Sources d'énergie <span>ACTIVER / DÉSACTIVER</span></div><div class="switch"><div class="source"><span class="symbol">☼</span><div><div class="source-name">Photovoltaïque</div><div class="source-desc">Production illustrative : 140 kW</div></div></div><button class="toggle on" id="solarSwitch" role="switch" aria-checked="true" aria-label="Activer le photovoltaïque"></button></div><div class="switch"><div class="source"><span class="symbol">↻</span><div><div class="source-name">Éolien</div><div class="source-desc">Production illustrative : 90 kW</div></div></div><button class="toggle on" id="windSwitch" role="switch" aria-checked="true" aria-label="Activer l'éolien"></button></div></section>
+ <section class="segment"><div class="section-title">Bilan du système <span>CALCUL EN DIRECT</span></div><div class="meters"><div class="meter"><div class="m-label">Production ENR</div><div class="m-value"><span id="enrValue">230</span><span class="unit">kW</span></div></div><div class="meter"><div class="m-label">Appel HTA estimé</div><div class="m-value"><span id="gridValue">350</span><span class="unit">kW</span></div></div></div><div class="row" style="margin-top:17px"><span class="label">Charge du transformateur</span><span class="value" id="pctValue">62 %</span></div><div class="bar-bg"><div class="bar-fill" id="barFill"></div></div><div class="status" id="status">✓ Fonctionnement dans la capacité nominale.</div></section>
+ <div class="buttons"><button class="btn primary" id="overloadBtn">⚡ Tester une surcharge</button><button class="btn" id="normalBtn">↺ Réinitialiser</button></div>
+ <div class="disclaimer">Simulation pédagogique simplifiée (cos φ = 0,90, productions ENR fixes). Les valeurs ne remplacent ni un calcul de réseau ni une étude de protection.</div>
+</aside>
+<main class="stage" id="stage">
+ <canvas id="view" aria-label="Scène 3D interactive : transformateur, panneaux solaires, éolienne, armoires BT"></canvas>
+ <div class="topbar"><div class="top-title"><div class="upper">SYSTÈME ÉLECTRIQUE / 01</div><strong>Poste 630 kVA · Réseau industriel</strong></div><div class="badge"><b>●</b> Vue 3D interactive</div></div>
+ <button type="button" class="hotspot" data-item="solar" id="hotSolar">Panneaux PV</button>
+ <button type="button" class="hotspot" data-item="wind" id="hotWind">Éolienne</button>
+ <button type="button" class="hotspot" data-item="transformer" id="hotTransformer">T1 · 630 kVA</button>
+ <button type="button" class="hotspot" data-item="tgbt" id="hotTgbt">TGBT</button>
+ <button type="button" class="hotspot" data-item="grid" id="hotGrid">Distribution BT</button>
+ <div class="details" id="details" hidden><button type="button" class="close" id="closeDetails" aria-label="Fermer le détail">×</button><div class="d-title" id="detailTitle"></div><p id="detailBody"></p><div class="detail-tag" id="detailTag"></div></div>
+ <div class="hintbar"><strong>↻ Glisser :</strong> tourner <span>·</span><strong>⤢ Molette :</strong> zoom <span>·</span><strong>Cliquer :</strong> inspecter</div>
+ <div class="tools"><button class="tool" id="autoBtn">↻ Rotation auto</button><button class="tool" id="resetView">⌖ Recentrer</button></div>
+ <div class="loading" id="loading"><div><strong>Chargement de la scène 3D…</strong><span id="loadingMsg">Préparation du modèle interactif…</span></div></div>
+</main>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/OrbitControls.js';
+const stage=document.getElementById('stage'),canvas=document.getElementById('view');
+const loading=document.getElementById('loading');
+const scene=new THREE.Scene();scene.background=new THREE.Color('#e8f3ff');scene.fog=new THREE.Fog('#e8f3ff',28,60);
+const camera=new THREE.PerspectiveCamera(37,1,.1,140);camera.position.set(17.4,13.6,20.5);
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.3;
+const controls=new OrbitControls(camera,canvas);controls.target.set(0,1.75,0);controls.enableDamping=true;controls.dampingFactor=.055;controls.minDistance=12;controls.maxDistance=44;controls.maxPolarAngle=Math.PI*.49;controls.minPolarAngle=.2;controls.enablePan=true;controls.autoRotate=false;controls.autoRotateSpeed=.7;controls.update();
+scene.add(new THREE.HemisphereLight('#f6fbff','#b8c9d9',2.35));const sun=new THREE.DirectionalLight('#fff5e6',3.1);sun.position.set(-10,20,15);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-20;sun.shadow.camera.right=20;sun.shadow.camera.top=20;sun.shadow.camera.bottom=-20;sun.shadow.normalBias=.025;scene.add(sun);
+const ambient=new THREE.DirectionalLight('#8cc8ff',.6);ambient.position.set(7,9,-12);scene.add(ambient);
+const m=(color,metalness=.1,roughness=.6)=>new THREE.MeshStandardMaterial({color,metalness,roughness});
+const mat={floor:m('#dfe7f0',.15,.85),concrete:m('#c9d2de',.03,.9),whitish:m('#f4f8fd',.25,.42),white:m('#e5ecf5',.28,.43),blue:m('#164c99',.4,.39),navy:m('#133b72',.5,.38),steel:m('#9eaec2',.77,.31),dark:m('#3d5269',.65,.43),black:m('#17283f',.5,.36),glass:m('#143a75',.62,.16),soil:m('#d4e2d8',.02,.9),grass:m('#66896e',.01,.99),cyan:new THREE.MeshStandardMaterial({color:'#1ecbff',emissive:'#03a4fc',emissiveIntensity:1.8,roughness:.24}),yellow:m('#e7bc41',.2,.47),solarEdge:m('#9aa9bd',.7,.3)};
+const root=new THREE.Group();scene.add(root);
+function box(w,h,d,material,x,y,z,parent=root){let mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;parent.add(mesh);return mesh;}
+function cyl(rt,rb,h,material,x,y,z,parent=root,segments=16){let mesh=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,segments),material);mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;parent.add(mesh);return mesh;}
+function linePoints(points,material,radius=.04,parent=root){let curve=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)),false,'catmullrom',.14);let mesh=new THREE.Mesh(new THREE.TubeGeometry(curve,Math.max(16,points.length*12),radius,8,false),material);mesh.castShadow=false;parent.add(mesh);return {curve,mesh};}
+function canvasLabel(text,w=512,h=138,fg='#ecf6ff',bg='#1754a4'){let cn=document.createElement('canvas');cn.width=w;cn.height=h;let c=cn.getContext('2d');c.fillStyle=bg;c.fillRect(0,0,w,h);c.fillStyle=fg;c.font='bold 55px Arial';c.textAlign='center';c.textBaseline='middle';c.fillText(text,w/2,h/2);let tx=new THREE.CanvasTexture(cn);tx.colorSpace=THREE.SRGBColorSpace;return new THREE.MeshBasicMaterial({map:tx,transparent:true,side:THREE.DoubleSide});}
+function sign(text,width,x,y,z,rotationY=0){let a=new THREE.Mesh(new THREE.PlaneGeometry(width,width*.27),canvasLabel(text));a.position.set(x,y,z);a.rotation.y=rotationY;root.add(a);return a;}
+// Site platform, relief details and clean lines.
+box(20.9,.45,13.7,mat.concrete,0,-.18,0);box(20.55,.11,13.38,mat.floor,0,.10,0);
+const gridMat=new THREE.LineBasicMaterial({color:'#afc2d7',transparent:true,opacity:.25});const grid=new THREE.GridHelper(20,22,'#afc5da','#bdcedf');grid.position.y=.163;grid.material.opacity=.26;grid.material.transparent=true;root.add(grid);
+for(let x of [-10,10]){box(.065,.14,13.2,mat.whitish,x,.14,0)}for(let z of [-6.55,6.55]){box(20,.14,.07,mat.whitish,0,.14,z)}
+function safetyOutline(cx,cz,w,d){const pts=[[cx-w/2,.192,cz-d/2],[cx+w/2,.192,cz-d/2],[cx+w/2,.192,cz+d/2],[cx-w/2,.192,cz+d/2],[cx-w/2,.192,cz-d/2]];linePoints(pts,mat.yellow,.026)}
+// Central transformer station. Enclosure + realistic slatted heat dissipation.
+const transformer=new THREE.Group();transformer.position.set(.2,0,-.35);root.add(transformer);
+const tgroup=transformer;
+box(5.8,.25,4.25,mat.concrete,0,.28,0,tgroup);box(5.55,2.72,4.0,mat.whitish,0,1.75,0,tgroup);box(5.58,1.4,4.04,mat.blue,0,1.14,0,tgroup);box(5.76,.25,4.16,mat.white,0,3.22,0,tgroup);
+// top fins
+for(let x=-2.33;x<2.52;x+=.53) {const fin=box(.12,.34,3.7,mat.steel,x,3.46,-.03,tgroup);fin.castShadow=true;}
+// facade horizontal ventilation and vertical division
+for(let j=0;j<10;j++){box(.39,.027,.045,mat.steel,-2.2+j*.45,2.63,2.038,tgroup)}
+for(let x of [-1.85,-.1,1.65]){box(.022,1.43,.052,mat.navy,x,1.15,2.04,tgroup)}
+// metallic door on right
+box(.95,2.05,.055,mat.dark,1.97,1.47,2.06,tgroup);box(.86,1.96,.056,mat.steel,1.97,1.47,2.093,tgroup);box(.06,.3,.055,mat.dark,2.3,1.47,2.14,tgroup);
+// bolts
+for(let i=0;i<10;i++){box(.1,.05,.035,mat.dark,-2.35+i*.47,2.67,2.04,tgroup)}
+for(let z=-1.55;z<1.65;z+=.31){box(.1,.55,.055,mat.dark,2.78,1.85,z,tgroup)}
+sign('T1 · 630 kVA',2.7,-.55,1.42,1.692,0);
+safetyOutline(.2,-.35,6.45,4.7);
+// solar arrays supported on real structural frames
+const solarObj=new THREE.Group();solarObj.position.set(-6.95,.3,1.65);root.add(solarObj);
+function buildSolar(x,z){const panelGroup=new THREE.Group();panelGroup.position.set(x,0,z);solarObj.add(panelGroup);for(let a of [-.68,.68]){box(.075,.85,.07,mat.steel,a,.44,-.35,panelGroup);box(.075,.78,.07,mat.steel,a,.39,.35,panelGroup)}
+ const top=new THREE.Group();top.rotation.x=-.31;top.position.set(0,1.0,0);panelGroup.add(top);box(2.45,.11,1.43,mat.solarEdge,0,0,0,top);box(2.35,.018,1.33,mat.glass,0,.07,0,top);
+ for(let i=-3;i<=3;i++){box(.017,.014,1.29,mat.solarEdge,i*.335,.083,0,top)}for(let j=-2;j<=2;j++){box(2.35,.014,.012,mat.solarEdge,0,.085,j*.27,top)}
+ for(let i=-3;i<4;i++)for(let j=-2;j<3;j++){const cell=box(.303,.004,.225,m(i%2===0?'#1d4b92':'#2557a2',.38,.22),i*.335,.091,j*.27,top);cell.castShadow=false}
+}
+for(let i=0;i<2;i++)for(let j=0;j<2;j++)buildSolar(-1.15+i*2.62,-1.2+j*2.02);
+// turbine in the back, rotor faces camera.
+const windObj=new THREE.Group();windObj.position.set(-7.45,0,-4.82);root.add(windObj);
+cyl(.20,.42,6.4,mat.whitish,0,3.4,0,windObj,24);cyl(.40,.48,.15,mat.concrete,0,.27,0,windObj,24);
+let nacelle=box(.84,.55,1.30,mat.white,0,6.59,.13,windObj);nacelle.castShadow=true;
+let rotor=new THREE.Group();rotor.position.set(0,6.55,.88);windObj.add(rotor);cyl(.27,.32,.39,mat.steel,0,0,.15,rotor,20).rotation.x=Math.PI/2;
+for(let i=0;i<3;i++){const blade=new THREE.Group();blade.rotation.z=i*Math.PI*2/3;rotor.add(blade);const shape=new THREE.Shape();shape.moveTo(-.13,.05);shape.quadraticCurveTo(-.38,1.2,-.17,2.63);shape.lineTo(.16,2.77);shape.quadraticCurveTo(.23,1.17,.17,.13);shape.closePath();let g=new THREE.ShapeGeometry(shape,7);let mm=new THREE.Mesh(g,mat.whitish);mm.position.z=.17;mm.castShadow=true;blade.add(mm)}
+cyl(.30,.26,.32,mat.steel,0,0,.29,rotor,20).rotation.x=Math.PI/2;
+// TGBT cabinets visible in front
+const tgbt=new THREE.Group();tgbt.position.set(2.2,.2,4.35);root.add(tgbt);
+box(4.1,.17,1.62,mat.concrete,0,.06,0,tgbt);
+for(let k=0;k<4;k++){let cx=-1.5+k*1.0;box(.97,2.05,1.28,mat.whitish,cx,1.18,0,tgbt);box(.85,1.83,.035,mat.white,cx,1.18,.665,tgbt);box(.32,.26,.04,mat.dark,cx,1.64,.7,tgbt);box(.2,.12,.047,m('#74d9db',.2,.24),cx,1.64,.733,tgbt);box(.04,.16,.055,mat.steel,cx+.31,.97,.71,tgbt);for(let j=0;j<4;j++)box(.52,.02,.039,mat.steel,cx,.55+j*.07,.713,tgbt)}
+safetyOutline(2.2,4.35,4.6,2.1);
+// right distribution enclosure
+const distribution=new THREE.Group();distribution.position.set(7.35,.12,-.52);root.add(distribution);
+box(2.55,.18,2.40,mat.concrete,0,.14,0,distribution);box(2.30,2.6,2.15,mat.whitish,0,1.57,0,distribution);box(2.36,.15,2.21,mat.white,0,2.94,0,distribution);
+for(let i=-.5;i<.7;i+=1){box(.78,2.12,.029,mat.white,i,1.57,1.1,distribution);box(.05,.28,.041,mat.dark,i+.25,1.51,1.126,distribution);for(let j=0;j<6;j++)box(.45,.023,.028,mat.steel,i,1.05+j*.065,1.127,distribution)}
+// accent lights
+const green=m('#30d6a5',.25,.1);green.emissive=new THREE.Color('#12bc7e');green.emissiveIntensity=2;
+for(let x of [-1.5,-.5,.5,1.5]){let led=new THREE.Mesh(new THREE.SphereGeometry(.055,12,10),green);led.position.set(x,1.95,.749);tgbt.add(led)}
+for(let x of [-.55,.55]){let led=new THREE.Mesh(new THREE.SphereGeometry(.075,12,10),green);led.position.set(x,2.43,1.13);distribution.add(led)}
+// plinth border lights and soft ground details
+for(let x of [-9.3,9.3])for(let z of [-5.9,5.9]){box(.14,.55,.14,mat.dark,x,.52,z);box(.15,.11,.15,mat.whitish,x,.82,z)}
+// Energy transmission routes with tube and glowing animated nodes.
+const routes=[];
+function route(points,mode,speed=1){const line=linePoints(points,mat.cyan,.038);const particles=[];for(let j=0;j<9;j++){let bead=new THREE.Mesh(new THREE.SphereGeometry(.095,9,8),mat.cyan);scene.add(bead);particles.push({mesh:bead,phase:j/9})}routes.push({curve:line.curve,mesh:line.mesh,particles,mode,speed})}
+route([[-6.0,.31,1.5],[-3.9,.32,1.5],[-2.75,.35,.5]],'solar',.1);
+route([[-7.45,.32,-4.82],[-5.2,.33,-4.8],[-3.2,.36,-3.1],[-2.7,.4,-1.8]],'wind',.08);
+route([[2.4,.4,1.8],[2.7,.36,2.8],[2.2,.35,3.55]],'grid',.16);
+route([[4.45,.35,4.4],[6.0,.34,4.0],[7.34,.37,1.2]],'grid',.13);
+const ui={load:document.getElementById('loadRange'),loadVal:document.getElementById('loadVal'),enr:document.getElementById('enrValue'),grid:document.getElementById('gridValue'),pct:document.getElementById('pctValue'),fill:document.getElementById('barFill'),status:document.getElementById('status'),solar:document.getElementById('solarSwitch'),wind:document.getElementById('windSwitch')};
+const state={load:580,solar:true,wind:true,selected:null};
+function update(){const enr=(state.solar?140:0)+(state.wind?90:0);const grid=Math.max(0,state.load-enr);const apparent=grid/.9;const pct=apparent/630*100;const overloaded=apparent>630;ui.load.value=state.load;ui.loadVal.textContent=state.load;ui.enr.textContent=enr;ui.grid.textContent=grid;ui.pct.textContent=`${Math.round(pct)} %`;ui.fill.style.width=`${Math.min(100,pct)}%`;ui.fill.style.background=overloaded?'linear-gradient(90deg,#ffbc56,#ef5a54)':'linear-gradient(90deg,#20c9b2,#48aaff)';ui.status.classList.toggle('warn',overloaded);ui.status.textContent=overloaded?'⚠ Surcharge estimée : au-delà de 630 kVA.':'✓ Fonctionnement dans la capacité nominale.';for(let [on,btn] of [[state.solar,ui.solar],[state.wind,ui.wind]]){btn.classList.toggle('on',on);btn.setAttribute('aria-checked',String(on))}for(let r of routes){let active=r.mode==='grid'||(r.mode==='solar'&&state.solar)||(r.mode==='wind'&&state.wind);r.mesh.visible=active;r.particles.forEach(p=>p.mesh.visible=active)} }
+ui.load.addEventListener('input',e=>{state.load=Number(e.target.value);update()});ui.solar.addEventListener('click',()=>{state.solar=!state.solar;update()});ui.wind.addEventListener('click',()=>{state.wind=!state.wind;update()});document.getElementById('overloadBtn').addEventListener('click',()=>{state.load=850;state.solar=false;state.wind=false;update()});document.getElementById('normalBtn').addEventListener('click',()=>{state.load=580;state.solar=true;state.wind=true;update()});document.getElementById('autoBtn').addEventListener('click',e=>{controls.autoRotate=!controls.autoRotate;e.currentTarget.classList.toggle('on',controls.autoRotate)});
+const home=new THREE.Vector3(17.4,13.6,20.5),target=new THREE.Vector3(0,1.75,0);document.getElementById('resetView').addEventListener('click',()=>{camera.position.copy(home);controls.target.copy(target);controls.autoRotate=false;document.getElementById('autoBtn').classList.remove('on');controls.update()});
+const itemInfo={solar:['Champ photovoltaïque','Modules solaires orientés sur structures métalliques. Source BT injectée dans le réseau de démonstration.','Production illustrée : 140 kW'],wind:['Éolienne','Turbine à trois pales animées. Rotation dépend de l’activation de la production éolienne.','Production illustrée : 90 kW'],transformer:['Transformateur T1','Poste HTA/BT représenté par une enveloppe technique avec ventilation. Capacité apparente nominale de 630 kVA.','Puissance nominale : 630 kVA'],tgbt:['Tableau général basse tension','Tableau de distribution BT avec quatre cellules, protections et affichages de contrôle illustratifs.','Courant nominal de référence : 1 000 A'],grid:['Distribution BT','Armoire de distribution alimentant les départs du site. Parcours de câbles illustratif.','Énergie distribuée vers les charges']};
+const anchors={solar:new THREE.Vector3(-6.9,2.0,1.3),wind:new THREE.Vector3(-7.45,7.5,-4.82),transformer:new THREE.Vector3(.2,4.12,-.35),tgbt:new THREE.Vector3(2.2,2.92,4.35),grid:new THREE.Vector3(7.35,3.3,-.52)};
+const itemMeshes={solar:solarObj,wind:windObj,transformer:tgroup,tgbt,grid:distribution};
+function choose(item){state.selected=item;const details=document.getElementById('details');details.hidden=false;document.getElementById('detailTitle').textContent=itemInfo[item][0];document.getElementById('detailBody').textContent=itemInfo[item][1];document.getElementById('detailTag').textContent=itemInfo[item][2];document.querySelectorAll('.hotspot').forEach(e=>e.classList.toggle('selected',e.dataset.item===item))}
+document.querySelectorAll('.hotspot').forEach(b=>b.addEventListener('click',()=>choose(b.dataset.item)));document.getElementById('closeDetails').addEventListener('click',()=>{document.getElementById('details').hidden=true;document.querySelectorAll('.hotspot').forEach(e=>e.classList.remove('selected'))});
+const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();let pressed={x:0,y:0};canvas.addEventListener('pointerdown',e=>{pressed={x:e.clientX,y:e.clientY}});canvas.addEventListener('pointerup',e=>{if(Math.hypot(e.clientX-pressed.x,e.clientY-pressed.y)>6)return;let rect=canvas.getBoundingClientRect();pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);raycaster.setFromCamera(pointer,camera);const intersections=raycaster.intersectObjects(root.children,true);for(const hit of intersections){let obj=hit.object;for(const [name,group] of Object.entries(itemMeshes)){let anc=obj;while(anc){if(anc===group){choose(name);return}anc=anc.parent}}}});
+function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;if(document.documentElement.classList.contains("portfolio-embed"))camera.fov=w/h<1.1?50:37;camera.updateProjectionMatrix()}new ResizeObserver(resize).observe(stage);resize();update();loading.style.display='none';
+const clock=new THREE.Clock(),v=new THREE.Vector3();function animate(){requestAnimationFrame(animate);const t=clock.getElapsedTime();if(state.wind)rotor.rotation.z=t*.32;controls.update();for(let r of routes){for(let p of r.particles){if(!p.mesh.visible)continue;const q=(p.phase+t*r.speed)%1;r.curve.getPointAt(q,v);p.mesh.position.copy(v);const pulse=.75+.3*Math.sin((q*11+t*2)*Math.PI);p.mesh.scale.setScalar(pulse)}}for(const [name,anchor] of Object.entries(anchors)){let p=anchor.clone().project(camera),el=document.getElementById('hot'+name[0].toUpperCase()+name.slice(1));if(!el)continue;el.style.left=`${(p.x*.5+.5)*stage.clientWidth}px`;el.style.top=`${(-p.y*.5+.5)*stage.clientHeight}px`;el.style.display=p.z<1&&p.z>-1?'':'none'}renderer.render(scene,camera)}animate();
+</script>
+<script>
+// User-facing diagnostic when CDN is blocked; otherwise the module hides the overlay.
+window.addEventListener('error',function(e){if(e.message&&(/module|import|script|three/i).test(e.message)){document.getElementById('loadingMsg').textContent='Impossible de charger la scène 3D. Rechargez la page ou essayez un navigateur compatible WebGL.';}});
+setTimeout(function(){const box=document.getElementById('loading');if(box&&box.style.display!=='none')document.getElementById('loadingMsg').textContent='Le chargement prend plus de temps que prévu. Rechargez la scène ou essayez un navigateur compatible WebGL.'},10000);
+</script>
+</body>
+</html>
+
+
+
